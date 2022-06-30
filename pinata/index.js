@@ -13,7 +13,7 @@ pinata.testAuthentication().then((result) => {
 });
 */
 
-const readableStreamForFile = fs.createReadStream('./images/2.jpeg');
+const readableStreamForFile = fs.createReadStream('./images/1.jpg');
 
 const options = {
     pinataMetadata: {
@@ -43,7 +43,7 @@ const pinJSONToIPFS = (body) => {
 const pinFileToIPFS = () => {
     return pinata.pinFileToIPFS(readableStreamForFile, options).then((result) => {
         //handle results here
-        //console.log(result);
+        console.log(result);
         return `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`
     }).catch((err) => {
         //handle error here
@@ -55,8 +55,8 @@ const getMetaData = async () => {
     const imageurl = await pinFileToIPFS()
     console.log(imageurl)
     const body = {
-        name: "My NFT Collection",
-        description: "This is my awesome nft collection",
+        name: "My NFT Collection 1",
+        description: "This is my awesome nft collection 1",
         image: imageurl
     };
 
