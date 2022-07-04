@@ -5,21 +5,25 @@ async function main() {
   console.log("Deploying contracts with the account: ", deployer.address);
   console.log("Account Balance: ",(await deployer.getBalance()).toString());
   
-  //const Collection = await hre.ethers.getContractFactory("Collection");
-  //const MyNFT = await hre.ethers.getContractFactory("MyNFT");
+  const NFT = await hre.ethers.getContractFactory("NFT");
   const Marketplace = await hre.ethers.getContractFactory("Marketplace");
+  //const MyNFT = await hre.ethers.getContractFactory("MyNFT");
+  //const Auction = await hre.ethers.getContractFactory("Auction");
 
-  //const collection = await Collection.deploy();
-  //const myNFT = await MyNFT.deploy();
+  const nft = await NFT.deploy();
   const marketplace = await Marketplace.deploy(1);
+  //const myNFT = await MyNFT.deploy();
+  //const auction = await Auction.deploy();
 
-  //await collection.deployed();
-  //await myNFT.deployed();
+  await nft.deployed();
   await marketplace.deployed();
+  //await myNFT.deployed();
+  //await auction.deployed();
 
-  // console.log("Collection deployed to:", collection.address);
-  //console.log("MyNFT deployed to:", myNFT.address);
+  console.log("NFT deployed to:", nft.address);
   console.log("Marketplace deployed to:", marketplace.address);
+  //console.log("MyNFT deployed to:", myNFT.address);
+  //console.log("Auction deployed to:", auction.address);
 }
 
 main()
@@ -29,5 +33,4 @@ main()
     process.exit(1);
   });
 
-  // MyNFT deployed to: 0x56b59bD2A6e79e9858a612970c5A1e900b2e90AC
-  // Marketplace deployed to: 0x14109BD4F03380788485ab6cE32BEb90e4b595bF
+// NFT deployed to: 0x43aD2983297f3e0d586FAAc795F09676Fa854EF8

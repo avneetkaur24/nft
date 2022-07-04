@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract Marketplace is ReentrancyGuard{
-    address payable public immutable feeAccount;
-    uint public immutable feePercent; 
+    address payable public immutable feeAccount; // the account that recieves fees
+    uint public immutable feePercent; // the fee percentage on sales
     uint public itemCount;
 
     struct Item{
@@ -17,6 +17,8 @@ contract Marketplace is ReentrancyGuard{
         address payable seller;
         bool sold;
     } 
+
+    mapping(uint => Item) public items;
 
     event Offered(
         uint itemId,
@@ -35,19 +37,21 @@ contract Marketplace is ReentrancyGuard{
         address indexed buyer
     );
 
-    mapping(uint => Item) public items;
-
     constructor(uint _feePercent){
         feeAccount = payable(msg.sender);
         feePercent = _feePercent;
+
     }
 
-    function makeItem(IERC721 _nft, uint _tokenId, uint _price) external nonReentrant {
+    function makeItem(IERC721 _nft, uint _tokenId, uint _price) external nonReentrant {//make order
         require(_price > 0, "Price must be greater than zero");
         itemCount++;
 
+
+        
         //transfer nft
         _nft.transferFrom(msg.sender, address(this), _tokenId);
+
 
         //add new item to items mapping
         items[itemCount] = Item (
@@ -56,7 +60,8 @@ contract Marketplace is ReentrancyGuard{
             _tokenId, 
             _price, 
             payable(msg.sender), 
-            false);
+            false
+        );
     
         emit Offered(
             itemCount,
@@ -91,4 +96,5 @@ contract Marketplace is ReentrancyGuard{
     function getTotalPrice(uint _itemId) public view returns(uint){
         return items[_itemId].price * (100 + feePercent) / 100;
     }
+
 }
