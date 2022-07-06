@@ -8,17 +8,27 @@ contract Marketplace is ReentrancyGuard{
     address payable public immutable feeAccount; // the account that recieves fees
     uint public immutable feePercent; // the fee percentage on sales
     uint public itemCount;
+    
 
     struct Item{
+        address payable owner;
         uint itemId;
         IERC721 nft;
         uint tokenId;
         uint price;
         address payable seller;
         bool sold;
+        uint royaltyInBips;
+        bool isPrimarySale;  
     } 
 
+    struct NFTOwners{
+        address owner;
+        bool isAdded;
+    }
+
     mapping(uint => Item) public items;
+    mapping(uint => NFTOwners) public nftOwners;
 
     event Offered(
         uint itemId,
@@ -40,26 +50,35 @@ contract Marketplace is ReentrancyGuard{
     constructor(uint _feePercent){
         feeAccount = payable(msg.sender);
         feePercent = _feePercent;
-
+        
     }
 
-    function makeItem(IERC721 _nft, uint _tokenId, uint _price) external nonReentrant {//make order
+    function makeItem(IERC721 _nft, uint _tokenId, uint _price, uint _royaltyFeesInBips) external nonReentrant {//make order
         require(_price > 0, "Price must be greater than zero");
         itemCount++;
+        address _royaltyOwner;
+        if(nftOwners[_tokenId].isAdded){
+            _royaltyOwner = nftOwners[_tokenId].owner;
+        }
+        else{
+            _royaltyOwner = msg.sender;
+            nftOwners[_tokenId].owner = msg.sender;
+            nftOwners[_tokenId].isAdded = true;
+        }
 
-
-        
         //transfer nft
         _nft.transferFrom(msg.sender, address(this), _tokenId);
 
-
         //add new item to items mapping
         items[itemCount] = Item (
+            payable(_royaltyOwner),
             itemCount, 
             _nft, 
             _tokenId, 
             _price, 
             payable(msg.sender), 
+            false,
+            _royaltyFeesInBips,
             false
         );
     
@@ -75,13 +94,23 @@ contract Marketplace is ReentrancyGuard{
     function purchaseItem(uint _itemId) external payable nonReentrant{
         uint _totalPrice = getTotalPrice(_itemId);
         Item storage item = items[_itemId];
+         
         require(_itemId > 0 && _itemId <= itemCount, "item doesnt exist");
         require(msg.value >= _totalPrice, "not enough ether to cover item price and market fee");
-        require(!item.sold, "item already sold");
+        // require(!item.sold, "item already sold");
 
-        //pay seller and feeAccount
+        if(!item.isPrimarySale){
+            uint royaltyFees = (_totalPrice * item.royaltyInBips) / 100;
+            uint amountToPay = _totalPrice - royaltyFees;
+            item.isPrimarySale = true;
+            item.seller.transfer(amountToPay);
+            item.owner.transfer(royaltyFees);
+        } else{
+            //pay seller and feeAccount
         item.seller.transfer(item.price);
         feeAccount.transfer(_totalPrice - item.price);
+        }
+        
 
         //update item to sold
         item.sold = true;
